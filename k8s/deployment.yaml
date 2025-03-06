@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trx-batch-processor
+  labels:
+    app: trx-batch-processor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trx-batch-processor
+  template:
+    metadata:
+      labels:
+        app: trx-batch-processor
+    spec:
+      containers:
+      - name: trx-batch-processor
+        image: hellozakir/trx-batch-processor:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql:3306/trx_batch_processor
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_USER
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: app-logs
+          mountPath: /app/logs
+      volumes:
+      - name: app-logs
+        persistentVolumeClaim:
+          claimName: app-logs-pvc
